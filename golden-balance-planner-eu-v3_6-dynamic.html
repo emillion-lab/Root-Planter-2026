@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Golden Balance – EU Uber Planner 2026 (v3.3 – Apple sliders + SmartScore rebuild)</title>
+  <meta name="theme-color" content="#0ea5e9" />
+  <style>
+    :root{ --bg:#050911; --panel:#0f1729; --card:#131b29; --border:#2d3748; --muted:#94a3b8; --text:#f1f5f9; --accent:#0ea5e9; --accent-2:#339CFF; --ok:#10b981; --warn:#f59e0b; --bad:#ef4444; --shadow:0 6px 18px -6px rgb(0 0 0/0.45); }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:var(--bg);color:var(--text);line-height:1.6}
+    header{position:sticky;top:0;background:rgba(5,9,17,0.95);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);padding:14px 18px;display:flex;align-items:center;gap:12px;z-index:100;box-shadow:var(--shadow)}
+    header .logo{width:42px;height:42px;border-radius:12px;background:linear-gradient(135deg,var(--accent),#7cc4ff);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:1.05rem}
+    header h1{font-size:1.08rem;font-weight:800}
+    header .actions{margin-left:auto;display:flex;gap:10px}
+    header button{background:var(--accent);color:#001830;border:none;padding:10px 16px;border-radius:10px;font-weight:800;cursor:pointer;transition:all .2s;font-size:.95rem}
+    header button:hover{transform:translateY(-1px)}
+    header .ghost{background:transparent;color:var(--muted);border:1px solid var(--border)}
+
+    .layout{display:grid;grid-template-columns:1fr;gap:16px;padding:18px;max-width:1900px;margin:0 auto}
+    @media(min-width:1200px){.layout{grid-template-columns:700px 1fr}}
+    @media(min-width:1600px){.layout{grid-template-columns:760px 1fr}}
+
+    .card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px;box-shadow:var(--shadow)}
+    .right{display:flex;flex-direction:column;gap:16px}
+    h3{font-size:.98rem;color:var(--muted);margin-bottom:12px;font-weight:700;text-transform:uppercase;letter-spacing:.35px}
+
+    .input-group{margin-bottom:16px}
+    .input-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;gap:10px}
+    .input-head .left{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:.92rem}
+    .val{color:var(--accent);font-weight:800;font-size:1.0rem}
+    .default{color:var(--muted);font-size:.8rem}
+    .mini{padding:6px 10px;border-radius:9px;background:transparent;color:var(--muted);border:1px solid var(--border);cursor:pointer}
+    .mini:hover{background:var(--panel)}
+
+    .two{display:grid;grid-template-columns:1fr 260px;gap:12px;align-items:center}
+    @media(max-width:1199px){.two{grid-template-columns:1fr 220px}}
+    @media(max-width:640px){.two{grid-template-columns:1fr 160px}}
+
+    input[type=number],select{width:100%;background:var(--panel);color:var(--text);border:1px solid var(--border);border-radius:10px;padding:10px 12px;margin-top:6px;font-size:1rem;transition:border-color .2s;min-width:160px}
+    input:focus,select:focus{outline:none;border-color:var(--accent)}
+
+    /* --- Apple-style custom slider --- */
+    .x-slider{position:relative;width:100%;height:38px;display:flex;align-items:center}
+    .x-track{position:relative;width:100%;height:12px;background:linear-gradient(180deg,#0c1220,#0a0f1a);border:1px solid #243045;border-radius:999px;box-shadow:inset 0 2px 3px rgba(0,0,0,.5)}
+    .x-fill{position:absolute;height:100%;left:0;top:0;background:linear-gradient(90deg,#5ab7ff,#2aa3ff);border-radius:999px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.25)}
+    .x-thumb{position:absolute;top:50%;transform:translate(-50%,-50%);width:34px;height:34px;border-radius:50%;background:linear-gradient(180deg,#eaf4ff,#cfe8ff);box-shadow:0 6px 16px rgba(0,0,0,.55), inset 0 1px 2px rgba(255,255,255,.8);border:2px solid #87c6ff;cursor:pointer;touch-action:none}
+    .x-thumb:after{content:"";position:absolute;inset:8px;border-radius:50%;background:radial-gradient(circle at 30% 30%,#ffffff,#d8ecff)}
+    .x-slider:focus-within .x-thumb{outline:4px solid rgba(74,171,255,.35)}
+    .x-tooltip{position:absolute;bottom:44px;transform:translateX(-50%);padding:4px 8px;border-radius:8px;background:#0b1527;color:#cfe8ff;border:1px solid #2a3b55;font-weight:700;font-size:.88rem;white-space:nowrap;pointer-events:none}
+    .x-tooltip:after{content:"";position:absolute;left:50%;bottom:-6px;transform:translateX(-50%);border-width:6px 6px 0 6px;border-style:solid;border-color:#0b1527 transparent transparent transparent}
+
+    .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-bottom:16px}
+    .kpi{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px}
+    .kpi .label{font-size:.86rem;color:var(--muted);margin-bottom:6px}
+    .kpi .big{font-size:1.4rem;font-weight:900;color:var(--text)}
+
+    .cities{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+    .city-chip{background:var(--panel);border:1px solid var(--border);color:var(--muted);padding:12px 16px;border-radius:12px;cursor:pointer;user-select:none;transition:all .2s;font-size:.9rem;display:flex;flex-direction:column;gap:6px;min-width:170px}
+    .city-chip:hover{transform:translateY(-2px);border-color:var(--accent)}
+    .city-chip.active{border-width:2px}
+    .city-chip.ok{border-color:var(--ok);background:rgba(16,185,129,.08)}
+    .city-chip.warn{border-color:var(--warn);background:rgba(245,158,11,.08)}
+    .city-chip.bad{border-color:var(--bad);background:rgba(239,68,68,.08)}
+    .city-chip .name{font-weight:800;font-size:1rem;color:var(--text)}
+    .city-chip .info{font-size:.78rem;color:var(--muted)}
+
+    .comparison-table{width:100%;border-collapse:collapse;margin-top:12px}
+    .comparison-table thead{background:var(--panel);position:sticky;top:80px;z-index:5}
+    .comparison-table th{padding:12px 10px;text-align:left;font-size:.86rem;color:var(--muted);border-bottom:2px solid var(--border)}
+    .comparison-table td{padding:12px 10px;border-bottom:1px solid var(--border);font-size:.9rem}
+    .comparison-table tbody tr:hover{background:var(--panel)}
+    .comparison-table tr.selected{background:rgba(14,165,233,.1);border-left:3px solid var(--accent)}
+
+    .info-box{background:rgba(14,165,233,.08);border:1px solid rgba(14,165,233,.25);border-radius:9px;padding:12px;margin-top:8px;font-size:.86rem;color:var(--muted)}
+    .quality-bar{height:10px;background:var(--panel);border-radius:5px;overflow:hidden;margin-top:5px}
+    .quality-fill{height:100%;transition:width .3s}
+    .quality-fill.high{background:linear-gradient(90deg,var(--ok),#059669)}
+    .quality-fill.medium{background:linear-gradient(90deg,var(--warn),#d97706)}
+    .quality-fill.low{background:linear-gradient(90deg,var(--bad),#dc2626)}
+    .badge{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--border);background:var(--panel);color:var(--muted);padding:5px 9px;border-radius:999px;font-size:.78rem}
+    .badge.ok{border-color:rgba(16,185,129,.4);color:#10b981}
+  
+/* --- FIX: larger, responsive slides --- */
+.slider, .slide {
+  width: 100% !important;
+  min-height: 70vh;
+}
+.slide {
+  font-size: 1.1em;
+}
+@media (max-width: 768px) {
+  .slider, .slide { min-height: 80vh; }
+}
+</style>
+
+</head>
+<body>
+<header>
+<select id='languageSelect' style='margin-right:10px'><option value='en'>EN</option><option value='bg'>BG</option><option value='de'>DE</option><option value='fr'>FR</option><option value='es'>ES</option><option value='it'>IT</option><option value='ro'>RO</option><option value='pl'>PL</option><option value='cs'>CS</option><option value='sk'>SK</option><option value='no'>NO</option><option value='sv'>SV</option></select>
+  <div class="logo">GB</div>
+  <h1>Golden Balance – Intelligent EU Planner 2026</h1>
+  <div class="actions">
+    <button id="btnResetAll" class="ghost" title="Reset city-dependent fields to defaults">Reset City Fields</button>
+  </div>
+</header>
+<div class="layout">
+  <div class="left">
+    <div class="card">
+      <h3>Household & Monthly Budget (EUR)</h3>
+      <div class="grid">
+        <div class="input-group"><div class="input-head"><div class="left">Adults <span class="val" id="adultsVal">2</span></div></div><div class="two"><div id="sl-adults" class="x-slider" data-min="1" data-max="4" data-step="1"></div><input id="adultsNum" type="number" min="1" max="4" value="2"/></div></div>
+        <div class="input-group"><div class="input-head"><div class="left">Children <span class="val" id="kidsVal">3</span></div></div><div class="two"><div id="sl-kids" class="x-slider" data-min="0" data-max="6" data-step="1"></div><input id="kidsNum" type="number" min="0" max="6" value="3"/></div></div>
+        <div class="input-group"><div class="input-head"><div class="left">House Rent / month <span class="val" id="houseRentVal">0 €</span></div></div><div class="two"><div id="sl-houseRent" class="x-slider" data-min="0" data-max="12000" data-step="50"></div><input id="houseRentNum" type="number" min="0" step="50" value="0"/></div></div>
+        <div class="input-group"><div class="input-head"><div class="left">Cost of Living (excl. rent & health) <span class="val" id="colVal">Auto</span> <span class="default" id="colDefault">• default: —</span></div><button class="mini" id="btnResetCol">↺ Reset</button></div><div class="two"><div id="sl-col" class="x-slider" data-min="0" data-max="15000" data-step="25"></div><input id="colNum" type="number" min="0" step="25" value="0"/></div><div class="muted">Default = City base (adult/child) × household. You can override.</div></div>
+        <div class="input-group"><div class="input-head"><div class="left">Health – adult / month <span class="val" id="adultHealthVal">0 €</span> <span class="default" id="adultHealthDefault">• default: —</span></div><button class="mini" id="btnResetAdultHealth">↺ Reset</button></div><div class="two"><div id="sl-adultHealth" class="x-slider" data-min="0" data-max="1000" data-step="10"></div><input id="adultHealthNum" type="number" min="0" step="10" value="0"/></div></div>
+        <div class="input-group"><div class="input-head"><div class="left">Health – child / month <span class="val" id="childHealthVal">0 €</span> <span class="default" id="childHealthDefault">• default: —</span></div><button class="mini" id="btnResetChildHealth">↺ Reset</button></div><div class="two"><div id="sl-childHealth" class="x-slider" data-min="0" data-max="600" data-step="10"></div><input id="childHealthNum" type="number" min="0" step="10" value="0"/></div></div>
+        <div class="input-group"><div class="input-head"><div class="left">Other income / month <span class="val" id="otherIncomeVal">0 €</span></div></div><div class="two"><div id="sl-otherIncome" class="x-slider" data-min="0" data-max="10000" data-step="50"></div><input id="otherIncomeNum" type="number" min="0" step="50" value="0"/></div></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Work, Fares & Taxes (EUR)</h3>
+      <div class="grid">
+        <div class="input-group"><div class="input-head"><div class="left">City personal income tax rate <span class="val" id="taxRateVal">Auto</span> <span class="default" id="taxRateDefault">• default: —</span></div><button class="mini" id="btnResetTax">↺ Reset</button></div><div class="two"><div id="sl-taxRate" class="x-slider" data-min="0" data-max="50" data-step="0.1"></div><input id="taxRateNum" type="number" min="0" max="50" step="0.1" value="0"/></div></div>
+        <div class="input-group"><div class="input-head"><div class="left">Working days / month <span class="val" id="workDaysVal">22</span></div></div><div class="two"><div id="sl-workDays" class="x-slider" data-min="16" data-max="26" data-step="1"></div><input id="workDaysNum" type="number" min="16" max="26" value="22"/></div></div>
+        <div class="input-group"><div class="input-head"><div class="left">Assumed trip length (km) <span class="val" id="tripKmVal">3.0 km</span></div></div><div class="two"><div id="sl-tripKm" class="x-slider" data-min="1" data-max="8" data-step="0.5"></div><input id="tripKmNum" type="number" min="1" max="50" step="0.5" value="3"/></div><div class="muted">Used to derive <strong>gross</strong> €/km from base fare + per‑km.</div></div>
+        <div class="input-group"><div class="input-head"><div class="left">Base fare (start) <span class="val" id="baseFareVal">Auto</span> <span class="default" id="baseFareDefault">• default: —</span></div><button class="mini" id="btnResetBaseFare">↺ Reset</button></div><div class="two"><div id="sl-baseFare" class="x-slider" data-min="0" data-max="15" data-step="0.1"></div><input id="baseFareNum" type="number" min="0" step="0.1" value="0"/></div></div>
+        <div class="input-group"><div class="input-head"><div class="left">Per‑km fare (gross) <span class="val" id="perKmVal">Auto</span> <span class="default" id="perKmDefault">• default: —</span></div><button class="mini" id="btnResetPerKm">↺ Reset</button></div><div class="two"><div id="sl-perKm" class="x-slider" data-min="0.2" data-max="5.0" data-step="0.05"></div><input id="perKmNum" type="number" min="0.2" step="0.05" value="0"/></div></div>
+        <div class="input-group"><div class="input-head"><div class="left">Passenger price / km (gross derived) <span class="val" id="fareKmVal">Auto</span> <span class="default" id="fareKmDefault">• default: —</span></div><button class="mini" id="btnResetFare">↺ Reset</button></div><div class="two"><div id="sl-fareKm" class="x-slider" data-min="0.5" data-max="5.0" data-step="0.05"></div><input id="fareKmNum" type="number" min="0.5" max="5.0" step="0.05" value="0"/></div><div class="muted">Gross €/km before platform fee and taxes, derived as (base + perKm×tripKm)/tripKm. You can override.</div></div>
+        <div class="input-group"><div class="input-head"><div class="left">Platform fee / commission (%) <span class="val" id="commPctVal">25%</span></div></div><div class="two"><div id="sl-commPct" class="x-slider" data-min="0" data-max="40" data-step="1"></div><input id="commPctNum" type="number" min="0" max="40" value="25"/></div></div>
+        <div class="input-group"><div class="input-head"><div class="left">Car rent (company ⇄ you) / month <span class="val" id="carRentVal">0 €</span></div></div><div class="two"><div id="sl-carRent" class="x-slider" data-min="0" data-max="4000" data-step="25"></div><input id="carRentNum" type="number" min="0" step="25" value="0"/></div><div class="muted"><strong>Family budget neutral.</strong> Only the <em>tax shield</em> from deductible share reduces the required net.</div></div>
+        <div class="input-group"><div class="input-head"><div class="left">Deductible share of car rent (%) <span class="val" id="carDeductVal">90%</span></div></div><div class="two"><div id="sl-carDeduct" class="x-slider" data-min="0" data-max="100" data-step="5"></div><input id="carDeductNum" type="number" min="0" max="100" value="90"/></div></div>
+        <div class="input-group"><div class="input-head"><div class="left">Daily km limit (fatigue) <span class="val" id="kmLimitVal">220 km</span></div></div><div class="two"><div id="sl-kmLimit" class="x-slider" data-min="150" data-max="500" data-step="10"></div><input id="kmLimitNum" type="number" min="0" step="5" value="220"/></div></div>
+      </div>
+      <div class="kpis" style="margin-top:14px;margin-bottom:0">
+        <div class="kpi"><div class="label">Tax shield from car rent / month</div><div class="big" id="taxShieldMonth">—</div></div>
+        <div class="kpi"><div class="label">Annual tax saved (deductions)</div><div class="big" id="totalSaved">—</div></div>
+        <div class="kpi"><div class="label">Net €/km (after fee & tax)</div><div class="big" id="netPerKm">—</div></div>
+        <div class="kpi"><div class="label">Daily earning potential</div><div class="big" id="dailyPotential">—</div></div>
+        <div class="kpi"><div class="label">Feasibility</div><div class="big" id="feasibility">—</div></div>
+      </div>
+      <div class="info-box">If your <strong>rent is under</strong> the city range, a commute penalty increases empty km and lowers real net €/km. You can still override sliders.</div>
+    </div>
+
+    <div class="card">
+      <h3>Smart Scoring System</h3>
+      <div class="grid">
+        <div class="input-group"><div class="input-head"><div class="left">Income weight <span class="val" id="wIncomeVal">40%</span></div><button class="mini" id="btnResetWIncome">↺ Reset</button></div><div id="sl-wIncome" class="x-slider" data-min="0" data-max="100" data-step="1"></div></div>
+        <div class="input-group"><div class="input-head"><div class="left">Cost of Living weight <span class="val" id="wColVal">35%</span></div><button class="mini" id="btnResetWCol">↺ Reset</button></div><div id="sl-wCol" class="x-slider" data-min="0" data-max="100" data-step="1"></div></div>
+        <div class="input-group"><div class="input-head"><div class="left">Quality of Life weight <span class="val" id="wQolVal">25%</span></div><button class="mini" id="btnResetWQol">↺ Reset</button></div><div id="sl-wQol" class="x-slider" data-min="0" data-max="100" data-step="1"></div></div>
+      </div>
+      <div class="muted">Rebuilt Smart Score with dynamic per‑render normalization. Adjust weights; cities re‑rank instantly.</div>
+    </div>
+  </div>
+
+  <div class="right">
+    <div class="card">
+      <h3>City Filters</h3>
+      <div class="grid" style="grid-template-columns:repeat(3,1fr)">
+        <label>Max. walk to school:<select id="walkFilter"><option value="30">≤ 30 min</option><option value="15" selected>≤ 15 min</option><option value="5">≤ 5 min</option></select></label>
+        <label>Min. school quality:<select id="schoolFilter"><option value="0">All</option><option value="3">≥ 3/5</option><option value="4" selected>≥ 4/5</option></select></label>
+        <label>Region:<select id="regionFilter"><option value="all" selected>All</option><option value="Western">Western</option><option value="Northern">Northern</option><option value="Southern">Southern</option><option value="Eastern">Eastern</option></select></label>
+      </div>
+      <div class="info-box" style="margin-top:0"><strong>Click a city</strong> to auto-fill defaults: tax, health (CH), base fare, per‑km, derived gross €/km, and COL baseline. Use ↺ Reset per field anytime.</div>
+    </div>
+
+    <div class="card"><h3>Active Cities / Zones</h3><div class="cities" id="cityChips"></div></div>
+
+    <div class="card" id="selectedCityDetails" style="display:none">
+      <h3 id="selectedCityName">—</h3>
+      <div class="kpis">
+        <div class="kpi"><div class="label">Required km / day</div><div class="big" id="selKmDay">—</div></div>
+        <div class="kpi"><div class="label">Net €/km</div><div class="big" id="selNetKm">—</div></div>
+        <div class="kpi"><div class="label">Empty km / day</div><div class="big" id="selEmptyKm">—</div></div>
+        <div class="kpi"><div class="label">QoL</div><div class="big" id="selQol">—</div></div>
+      </div>
+      <div style="margin-top:12px">
+        <div class="input-head" style="justify-content:flex-start;gap:8px"><span>Schools:</span><div class="quality-bar" style="flex:1;margin:0"><div class="quality-fill high" id="selSchool" style="width:80%"></div></div><span id="selSchoolVal">4/5</span></div>
+        <div class="input-head" style="justify-content:flex-start;gap:8px"><span>Sports:</span><div class="quality-bar" style="flex:1;margin:0"><div class="quality-fill medium" id="selSport" style="width:60%"></div></div><span id="selSportVal">3/5</span></div>
+        <div class="input-head" style="justify-content:flex-start;gap:8px"><span>Arts:</span><div class="quality-bar" style="flex:1;margin:0"><div class="quality-fill medium" id="selArts" style="width:60%"></div></div><span id="selArtsVal">3/5</span></div>
+      </div>
+      <div class="info-box" style="margin-top:12px" id="selInfo">—</div>
+    </div>
+
+    <div class="card">
+      <h3>Comparison Table</h3>
+      <table class="comparison-table"><thead><tr><th>City</th><th>Km/day</th><th>Net €/km</th><th>Rent range</th><th>School</th><th>QoL</th><th>Status</th><th>Score</th></tr></thead><tbody id="comparisonBody"></tbody></table>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const $ = s => document.querySelector(s);
+  const fmt = n => Math.round(n).toLocaleString('en-GB');
+  const fmtEUR = n => (isNaN(n)?'—':Math.round(n).toLocaleString('en-GB')) + ' €';
+
+  // Cities subset (same as v3.1; trimmed for brevity in this block)
+  const CITIES = {
+
+    Zurich:{name:'Zurich',region:'Western',rentMin:3000,rentMax:5200,emptyKm:5,walkTime:8,colAdult:1100,colChild:600,baseFare:6.0,perKm:3.2},
+    Geneva:{name:'Geneva',region:'Western',rentMin:2800,rentMax:4800,emptyKm:6,walkTime:9,colAdult:1050,colChild:580,baseFare:5.8,perKm:3.0},
+    Vienna:{name:'Vienna',region:'Central',rentMin:1200,rentMax:2600,emptyKm:9,walkTime:12,colAdult:700,colChild:360,baseFare:3.2,perKm:1.8},
+    Prague:{name:'Prague',region:'Central',rentMin:1000,rentMax:2200,emptyKm:10,walkTime:13,colAdult:650,colChild:330,baseFare:2.8,perKm:1.6},
+    Budapest:{name:'Budapest',region:'Central',rentMin:900,rentMax:2000,emptyKm:11,walkTime:14,colAdult:620,colChild:320,baseFare:2.5,perKm:1.4},
+
+    Zurich:{name:'Zürich',region:'Western',rentMin:2500,rentMax:6000,emptyKm:3,walkTime:5,school:5,sport:5,arts:5,colAdult:1100,colChild:550,taxRate:20,childBenefit:200,healthAdult:380,healthChild:120,baseFare:6.0,perKm:3.0},
+    Geneva:{name:'Geneva',region:'Western',rentMin:2400,rentMax:5500,emptyKm:4,walkTime:7,school:4,sport:4,arts:5,colAdult:1100,colChild:550,taxRate:22,childBenefit:220,healthAdult:380,healthChild:120,baseFare:6.0,perKm:3.0},
+    Berlin:{name:'Berlin',region:'Western',rentMin:1500,rentMax:3200,emptyKm:9,walkTime:12,school:4,sport:4,arts:5,colAdult:800,colChild:450,taxRate:25,childBenefit:250,healthAdult:0,healthChild:0,baseFare:3.9,perKm:2.0},
+    Vienna:{name:'Vienna',region:'Western',rentMin:1500,rentMax:3000,emptyKm:8,walkTime:10,school:5,sport:4,arts:5,colAdult:800,colChild:420,taxRate:30,childBenefit:180,healthAdult:0,healthChild:0,baseFare:3.4,perKm:1.8},
+    Amsterdam:{name:'Amsterdam',region:'Western',rentMin:2200,rentMax:4000,emptyKm:9,walkTime:10,school:4,sport:4,arts:4,colAdult:950,colChild:500,taxRate:38,childBenefit:150,healthAdult:0,healthChild:0,baseFare:3.5,perKm:2.0},
+    Oslo:{name:'Oslo',region:'Northern',rentMin:1900,rentMax:3600,emptyKm:7,walkTime:10,school:5,sport:5,arts:4,colAdult:950,colChild:520,taxRate:32,childBenefit:170,healthAdult:0,healthChild:0,baseFare:5.0,perKm:2.5},
+    Prague:{name:'Prague',region:'Eastern',rentMin:1200,rentMax:2400,emptyKm:8,walkTime:10,school:4,sport:4,arts:4,colAdult:700,colChild:360,taxRate:23,childBenefit:50,healthAdult:0,healthChild:0,baseFare:1.8,perKm:1.0},
+    Warsaw:{name:'Warsaw',region:'Eastern',rentMin:1100,rentMax:2200,emptyKm:9,walkTime:12,school:4,sport:4,arts:4,colAdult:650,colChild:340,taxRate:17,childBenefit:110,healthAdult:0,healthChild:0,baseFare:2.0,perKm:1.0},
+    Sofia:{name:'Sofia',region:'Eastern',rentMin:800,rentMax:1500,emptyKm:12,walkTime:15,school:3,sport:3,arts:3,colAdult:550,colChild:300,taxRate:10,childBenefit:50,healthAdult:0,healthChild:0,baseFare:1.5,perKm:0.8}
+  ,
+    London:{name:'London',region:'Western',rentMin:2200,rentMax:4200,emptyKm:8,walkTime:10,school:4,sport:4,arts:5,colAdult:900,colChild:480,taxRate:28,childBenefit:90,healthAdult:0,healthChild:0,baseFare:4.2,perKm:2.2},
+    Manchester:{name:'Manchester',region:'Western',rentMin:1400,rentMax:2600,emptyKm:9,walkTime:12,school:4,sport:4,arts:4,colAdult:750,colChild:420,taxRate:26,childBenefit:90,healthAdult:0,healthChild:0,baseFare:3.8,perKm:2.0},
+    Dublin:{name:'Dublin',region:'Western',rentMin:2100,rentMax:3800,emptyKm:7,walkTime:10,school:4,sport:4,arts:4,colAdult:880,colChild:460,taxRate:25,childBenefit:140,healthAdult:0,healthChild:0,baseFare:4.0,perKm:2.1},
+    Barcelona:{name:'Barcelona',region:'Southern',rentMin:1200,rentMax:2600,emptyKm:10,walkTime:15,school:4,sport:4,arts:5,colAdult:650,colChild:330,taxRate:22,childBenefit:100,healthAdult:0,healthChild:0,baseFare:2.2,perKm:1.2},
+    Valencia:{name:'Valencia',region:'Southern',rentMin:900,rentMax:2000,emptyKm:11,walkTime:15,school:4,sport:4,arts:4,colAdult:600,colChild:310,taxRate:21,childBenefit:100,healthAdult:0,healthChild:0,baseFare:2.0,perKm:1.1},
+    Porto:{name:'Porto',region:'Southern',rentMin:900,rentMax:1900,emptyKm:11,walkTime:15,school:3,sport:3,arts:4,colAdult:580,colChild:300,taxRate:20,childBenefit:0,healthAdult:0,healthChild:0,baseFare:1.9,perKm:1.0}
+  };
+
+  const S = {adults:2,kids:3,houseRent:0,col:0,adultHealth:0,childHealth:0,otherIncome:0,taxRate:0,workDays:22,tripKm:3,baseFare:0,perKm:0,fareKm:0,commPct:25,carRent:0,carDeduct:90,kmLimit:220,wIncome:40,wCol:35,wQol:25,walkFilter:15,schoolFilter:4,regionFilter:'all',selectedCity:null};
+
+  // ===== Apple-style slider component =====
+  function createSlider(el, onChange){
+    const min = parseFloat(el.dataset.min||'0');
+    const max = parseFloat(el.dataset.max||'100');
+    const step= parseFloat(el.dataset.step||'1');
+    const track = document.createElement('div'); track.className='x-track'; el.appendChild(track);
+    const fill  = document.createElement('div'); fill.className='x-fill'; track.appendChild(fill);
+    const thumb = document.createElement('div'); thumb.className='x-thumb'; el.appendChild(thumb);
+    const tip   = document.createElement('div'); tip.className='x-tooltip'; tip.style.display='none'; el.appendChild(tip);
+
+    let value=min; let dragging=false;
+    function clamp(v){ return Math.min(max, Math.max(min, v)); }
+    function snap(v){ const n=(v-min)/step; const r=Math.round(n)*step+min; return parseFloat(r.toFixed(6)); }
+    function pct(){ return ((value-min)/(max-min))*100; }
+    function layout(){ const p=pct(); fill.style.width=p+'%'; thumb.style.left=p+'%'; tip.style.left=p+'%'; }
+    function set(v,emit=true){ value = snap(clamp(v)); layout(); if(emit) onChange(value, {min,max,step}); }
+
+    function fromClientX(x){ const rect=track.getBoundingClientRect(); const t = (x-rect.left)/rect.width; return min + t*(max-min); }
+    function start(e){ dragging=true; tip.style.display='block'; document.addEventListener('mousemove',move); document.addEventListener('mouseup',end); document.addEventListener('touchmove',move,{passive:false}); document.addEventListener('touchend',end); move(e); }
+    function move(e){ if(!dragging) return; const clientX = e.touches? e.touches[0].clientX : e.clientX; set(fromClientX(clientX)); tip.textContent = display(value); e.preventDefault?.(); }
+    function end(){ dragging=false; tip.style.display='none'; document.removeEventListener('mousemove',move); document.removeEventListener('mouseup',end); document.removeEventListener('touchmove',move); document.removeEventListener('touchend',end); }
+
+    track.addEventListener('mousedown',start); thumb.addEventListener('mousedown',start); track.addEventListener('touchstart',start,{passive:true}); thumb.addEventListener('touchstart',start,{passive:true});
+    el.tabIndex=0; el.addEventListener('keydown',e=>{ let d=0; if(e.key==='ArrowRight'||e.key==='ArrowUp') d=step; if(e.key==='ArrowLeft'||e.key==='ArrowDown') d=-step; if(e.key==='PageUp') d=5*step; if(e.key==='PageDown') d=-5*step; if(d!==0){ set(value+d); tip.style.display='block'; tip.textContent=display(value); setTimeout(()=>tip.style.display='none',600); e.preventDefault(); }});
+
+    function display(v){ return v; }
+    set(min,false);
+    return { set, get:()=>value, setDisplayFormatter:(fn)=>{ el._fmt=fn; display=(x)=>fn(x); }, update:()=>layout() };
+  }
+
+  // Utility formatters
+  const asPct = v=> Number(v).toFixed(1)+'%';
+  const asEUR = v=> fmtEUR(v);
+  const asKm  = v=> fmt(v)+' km';
+  const asKm1 = v=> Number(v).toFixed(1)+' km';
+  const asEUR2= v=> Number(v).toFixed(2)+' €';
+
+  // ===== Bind slider + number pairs to state =====
+  function bindSlider(slId, numId, key, fmtFn, onChange){
+    const el = $(slId); const num=$(numId); const sld = createSlider(el, (v)=>{ S[key]=v; if(num){ num.value=v; } if(fmtFn){ updateValText(key,v,fmtFn); } if(onChange) onChange(v); calc(); });
+    if(fmtFn){ sld.setDisplayFormatter(fmtFn); }
+    if(num){ num.addEventListener('input',()=>{ const v=Number(num.value||0); S[key]=v; sld.set(v); if(fmtFn) updateValText(key,v,fmtFn); calc(); }); }
+    // initial
+    const initVal = Number(num?.value||0); S[key]=initVal; sld.set(initVal,false); if(fmtFn) updateValText(key,initVal,fmtFn);
+    return sld;
+  }
+  function updateValText(key,v,fmtFn){ const map={adults:'#adultsVal',kids:'#kidsVal',houseRent:'#houseRentVal',col:'#colVal',adultHealth:'#adultHealthVal',childHealth:'#childHealthVal',otherIncome:'#otherIncomeVal',taxRate:'#taxRateVal',workDays:'#workDaysVal',tripKm:'#tripKmVal',baseFare:'#baseFareVal',perKm:'#perKmVal',fareKm:'#fareKmVal',commPct:'#commPctVal',carRent:'#carRentVal',carDeduct:'#carDeductVal',kmLimit:'#kmLimitVal',wIncome:'#wIncomeVal',wCol:'#wColVal',wQol:'#wQolVal'}; const sel=map[key]; if(sel) $(sel).textContent = fmtFn(v); }
+
+  // City data & helpers (same as v3.1 subset)
+  function grossPerKm(base, perKm, L){ L=Math.max(1, L||S.tripKm||3); return (Number(base)+Number(perKm)*L)/L; }
+  function commutePenalty(c){ if(!c) return 0; if(S.houseRent>=c.rentMin) return 0; const gap=(c.rentMin - S.houseRent)/c.rentMin; return Math.min(7, Math.max(0, gap*10*c.walkTime/10)); }
+  function colDefault(c){ c=c||currentCity(); if(!c) return 0; return (c.colAdult||0)*S.adults + (c.colChild||0)*S.kids; }
+  function currentCity(){ if(!S.selectedCity) return null; return CITIES[S.selectedCity]; }
+
+  function applyCityDefaults(key){ S.selectedCity=key; const c=currentCity(); if(!c) return;
+    setField('taxRate', c.taxRate, v=>Number(v).toFixed(1)+'%'); $('#taxRateDefault').textContent='• default: '+c.taxRate.toFixed(1)+'%';
+    setField('baseFare', c.baseFare, asEUR2); $('#baseFareDefault').textContent='• default: '+c.baseFare.toFixed(2)+' €';
+    setField('perKm', c.perKm, asEUR2); $('#perKmDefault').textContent='• default: '+c.perKm.toFixed(2)+' €';
+    const derived=grossPerKm(c.baseFare,c.perKm,S.tripKm); setField('fareKm', derived, asEUR2); $('#fareKmDefault').textContent='• default: (base+km)/L';
+    const baseCOL=colDefault(c); setField('col', baseCOL, asEUR); $('#colDefault').textContent='• default: '+fmtEUR(baseCOL);
+    setField('adultHealth', c.healthAdult||0, asEUR); $('#adultHealthDefault').textContent='• default: '+fmtEUR(c.healthAdult||0);
+    setField('childHealth', c.healthChild||0, asEUR); $('#childHealthDefault').textContent='• default: '+fmtEUR(c.healthChild||0);
+    calc();
+  }
+  function setField(key, val, fmtFn){ S[key]=Number(val); // update number inputs if exist
+    const numId={taxRate:'#taxRateNum',baseFare:'#baseFareNum',perKm:'#perKmNum',fareKm:'#fareKmNum',col:'#colNum',adultHealth:'#adultHealthNum',childHealth:'#childHealthNum'}[key]; if(numId){ const n=$(numId); if(n){ n.value=Number(val); }} updateValText(key,Number(val),fmtFn); const sMap={taxRate:'#sl-taxRate',baseFare:'#sl-baseFare',perKm:'#sl-perKm',fareKm:'#sl-fareKm',col:'#sl-col',adultHealth:'#sl-adultHealth',childHealth:'#sl-childHealth'}; const sId=sMap[key]; if(sId){ const el=$(sId); el && el._slider && el._slider.set(Number(val),false); }
+  }
+
+  function degradeByEmptyKm(emptyKm){ return Math.max(0.5, 1 - (emptyKm/100)*1.2); }
+  function qolScore(school, sport, arts, walkTime, rentInBudget){ const edu=(school+sport+arts)/15; const walk=walkTime<=5?1:(walkTime<=15?0.8:0.5); const budget=rentInBudget?1:0.5; return Math.round((edu*0.4 + walk*0.3 + budget*0.3)*100); }
+  function normalizeWeights(){ const sum=S.wIncome+S.wCol+S.wQol || 1; return {wi:S.wIncome/sum, wc:S.wCol/sum, wq:S.wQol/sum}; }
+
+  function calc(){ const c=currentCity()||{}; const taxRate=S.taxRate/100; const derived=grossPerKm(S.baseFare,S.perKm,S.tripKm); if(Number($('#fareKmNum').value||0)===0){ setField('fareKm', derived, asEUR2); }
+    const platformNet = S.fareKm*(1-S.commPct/100); const netAfterTax=platformNet*(1-taxRate);
+    const effEmptyKm=(c.emptyKm||10)+commutePenalty(c); const realNetKm=netAfterTax*degradeByEmptyKm(effEmptyKm);
+    const healthTotal=S.adults*S.adultHealth + S.kids*S.childHealth; const totalCosts=S.houseRent + S.col + healthTotal; const childBenefit=c.childBenefit||0; const familyIncome=S.otherIncome + (S.kids*childBenefit);
+    const taxShieldMonth=(S.carRent*(S.carDeduct/100))*taxRate; const taxSavedYear=taxShieldMonth*12; const needed=Math.max(0,totalCosts - familyIncome - taxShieldMonth);
+    const kmMonth=(needed>0 && realNetKm>0)? needed/realNetKm:0; const kmDay=kmMonth>0? kmMonth/S.workDays:0; const dailyPotential=Math.max(0,S.kmLimit)*realNetKm;
+    const rentInBudget=(S.houseRent>=c.rentMin && S.houseRent<=c.rentMax); const qol=qolScore(c.school||3,c.sport||3,c.arts||3,c.walkTime||15,rentInBudget);
+    let feas='—',pill=''; if(kmDay===0){feas='Covered';pill='ok';} else if(kmDay<=S.kmLimit){feas='Easy';pill='ok';} else if(kmDay<=S.kmLimit*1.15){feas='Borderline';pill='warn';} else {feas='Hard';pill='bad';}
+    $('#netPerKm').textContent=netAfterTax>0? netAfterTax.toFixed(2)+' €':'—'; $('#dailyPotential').textContent=fmtEUR(dailyPotential); $('#feasibility').innerHTML=`<span class="badge ${pill}">${feas}</span>`; $('#taxShieldMonth').textContent=fmtEUR(taxShieldMonth); $('#totalSaved').textContent=fmtEUR(taxSavedYear);
+    // Rebuild cities with dynamic normalization for Smart Score
+    renderCitiesDynamic(realNetKm);
+    showCityDetails(c, kmDay, realNetKm, qol, rentInBudget, effEmptyKm);
+  }
+
+  function renderCitiesDynamic(realNetKmCurrent){ const chips=$('#cityChips'); const tbody=$('#comparisonBody'); chips.innerHTML=''; tbody.innerHTML=''; const W=normalizeWeights();
+    // 1) Build raw metrics per city
+    const raw = Object.keys(CITIES).filter(k=>{ const c=CITIES[k]; if(c.walkTime>S.walkFilter) return false; if(c.school<S.schoolFilter) return false; if(S.regionFilter!=='all' && c.region!==S.regionFilter) return false; return true; }).map(k=>{ const c=CITIES[k]; const tax=(c.taxRate||0)/100; const effEmpty=(c.emptyKm||10) + (S.houseRent<c.rentMin? commutePenalty(c):0); const gross=grossPerKm(c.baseFare,c.perKm,S.tripKm); const net=gross*(1-S.commPct/100)*(1-tax); const realNetKm = net * degradeByEmptyKm(effEmpty); const healthTotal=S.adults*S.adultHealth + S.kids*S.childHealth; const monthlyCol = (S.col>0?S.col:colDefault(c)); const monthlyCosts=S.houseRent + monthlyCol + healthTotal; const famInc=S.otherIncome + (S.kids*(c.childBenefit||0)); const taxShieldMonth=(S.carRent*(S.carDeduct/100))*(S.taxRate/100); const needed=Math.max(0, monthlyCosts - famInc - taxShieldMonth); const kmDay=(needed>0 && realNetKm>0)? (needed/realNetKm)/S.workDays : 0; const rentInBudget=(S.houseRent>=c.rentMin && S.houseRent<=c.rentMax); const qol=qolScore(c.school||3,c.sport||3,c.arts||3,c.walkTime||15,rentInBudget); return {key:k,c,realNetKm,monthlyCosts,qol,kmDay}; });
+    if(raw.length===0) return;
+    // 2) Dynamic min-max normalization
+    const minReal=Math.min(...raw.map(r=>r.realNetKm)), maxReal=Math.max(...raw.map(r=>r.realNetKm));
+    const minCost=Math.min(...raw.map(r=>r.monthlyCosts)), maxCost=Math.max(...raw.map(r=>r.monthlyCosts));
+    const rangeReal=Math.max(1e-6, maxReal-minReal), rangeCost=Math.max(1e-6, maxCost-minCost);
+    const rows = raw.map(r=>{ const incomeScore = (r.realNetKm - minReal)/rangeReal; const colScore = 1 - (r.monthlyCosts - minCost)/rangeCost; const qScore=r.qol/100; const smart = (incomeScore*W.wi + colScore*W.wc + qScore*W.wq)*100; const status=r.kmDay<=S.kmLimit?'ok':(r.kmDay<=S.kmLimit*1.15?'warn':'bad'); return {...r, incomeScore, colScore, qScore, smart, status}; }).sort((a,b)=> a.kmDay - b.kmDay);
+    // 3) Render UI
+    rows.forEach(d=>{ const chip=document.createElement('div'); chip.className=`city-chip ${d.status}`; if(S.selectedCity===d.key) chip.classList.add('active'); chip.innerHTML=`<div class="name">${d.c.name}</div><div class="info">🚗 ${fmt(d.kmDay)} km/day</div><div class="info">🎯 ${Math.round(d.smart)} • 💶 ${(d.realNetKm>0?d.realNetKm.toFixed(2):'—')} €/km</div>`; chip.addEventListener('click',()=>{ applyCityDefaults(d.key); }); chips.appendChild(chip);
+      const tr=document.createElement('tr'); if(S.selectedCity===d.key) tr.className='selected'; tr.innerHTML=`<td><strong>${d.c.name}</strong><br><span class="muted">${d.c.rentMin}–${d.c.rentMax} €</span></td><td><strong>${fmt(d.kmDay)}</strong> km</td><td>${d.realNetKm>0?d.realNetKm.toFixed(2):'—'}</td><td>${d.c.rentMin}–${d.c.rentMax}</td><td>📚 ${d.c.school}/5</td><td><strong>${d.qol}%</strong></td><td><span class="badge ${d.status==='ok'?'ok':(d.status==='warn'?'':'')}">${d.status==='ok'?'Easy':(d.status==='warn'?'Borderline':'Hard')}</span></td><td>${Math.round(d.smart)}</td>`; tr.style.cursor='pointer'; tr.addEventListener('click',()=>{ applyCityDefaults(d.key); }); tbody.appendChild(tr); });
+  }
+
+  function showCityDetails(c, kmDay, realNetKm, qol, rentInBudget, effEmpty){ if(!c) return; const box=$('#selectedCityDetails'); box.style.display='block'; $('#selectedCityName').textContent=c.name; $('#selKmDay').textContent = isNaN(kmDay)? '—' : fmt(kmDay)+' km'; $('#selNetKm').textContent = isNaN(realNetKm)? '—' : realNetKm.toFixed(2)+' €'; $('#selEmptyKm').textContent = (effEmpty||c.emptyKm||0) + ' km'; $('#selQol').textContent = (qol||0)+'%'; const schoolPct=(c.school/5)*100, sportPct=(c.sport/5)*100, artsPct=(c.arts/5)*100; const setBar=(el,p)=>{ el.style.width=p+'%'; el.className='quality-fill '+(p>=80?'high':(p>=60?'medium':'low')); }; setBar($('#selSchool'),schoolPct); $('#selSchoolVal').textContent=c.school+'/5'; setBar($('#selSport'),sportPct); $('#selSportVal').textContent=c.sport+'/5'; setBar($('#selArts'),artsPct); $('#selArtsVal').textContent=c.arts+'/5'; const rentMsg = S.houseRent>=c.rentMin && S.houseRent<=c.rentMax ? `✅ Your rent budget ${S.houseRent} € is within ${c.rentMin}–${c.rentMax} €` : `⚠️ Budget ${S.houseRent} € is outside ${c.rentMin}–${c.rentMax} € → extra commute penalty applied`; $('#selInfo').innerHTML = `<strong>Gross €/km:</strong> (base ${S.baseFare.toFixed(2)}€ + ${S.perKm.toFixed(2)}€/km × ${S.tripKm.toFixed(1)}km) / ${S.tripKm.toFixed(1)} = ${grossPerKm(S.baseFare,S.perKm,S.tripKm).toFixed(2)} €/km<br><strong>Rent range:</strong> ${rentMsg}`; }
+
+  // Create all sliders & binders
+  function init(){
+    const bind = bindSlider;
+    // household
+    const s_adults = bind('#sl-adults','#adultsNum','adults',v=>String(v)); $('#adultsNum').addEventListener('change',()=>calc());
+    const s_kids   = bind('#sl-kids','#kidsNum','kids',v=>String(v)); $('#kidsNum').addEventListener('change',()=>calc());
+    bind('#sl-houseRent','#houseRentNum','houseRent',v=>fmtEUR(v));
+    bind('#sl-col','#colNum','col',v=>fmtEUR(v));
+    bind('#sl-adultHealth','#adultHealthNum','adultHealth',v=>fmtEUR(v));
+    bind('#sl-childHealth','#childHealthNum','childHealth',v=>fmtEUR(v));
+    bind('#sl-otherIncome','#otherIncomeNum','otherIncome',v=>fmtEUR(v));
+
+    // work & fares
+    bind('#sl-taxRate','#taxRateNum','taxRate',v=>Number(v).toFixed(1)+'%');
+    bind('#sl-workDays','#workDaysNum','workDays',v=>String(v));
+    bind('#sl-tripKm','#tripKmNum','tripKm',v=>Number(v).toFixed(1)+' km');
+    bind('#sl-baseFare','#baseFareNum','baseFare',v=>Number(v).toFixed(2)+' €');
+    bind('#sl-perKm','#perKmNum','perKm',v=>Number(v).toFixed(2)+' €');
+    bind('#sl-fareKm','#fareKmNum','fareKm',v=>Number(v).toFixed(2)+' €');
+    bind('#sl-commPct','#commPctNum','commPct',v=>Math.round(v)+'%');
+    bind('#sl-carRent','#carRentNum','carRent',v=>fmtEUR(v));
+    bind('#sl-carDeduct','#carDeductNum','carDeduct',v=>Math.round(v)+'%');
+    bind('#sl-kmLimit','#kmLimitNum','kmLimit',v=>fmt(v)+' km');
+
+    // Smart scoring weights
+    const w1 = bind('#sl-wIncome',null,'wIncome',v=>Math.round(v)+'%'); S.wIncome=40; $('#wIncomeVal').textContent='40%'; $('#sl-wIncome')._slider.set(40,false);
+    const w2 = bind('#sl-wCol',null,'wCol',v=>Math.round(v)+'%'); S.wCol=35; $('#wColVal').textContent='35%'; $('#sl-wCol')._slider.set(35,false);
+    const w3 = bind('#sl-wQol',null,'wQol',v=>Math.round(v)+'%'); S.wQol=25; $('#wQolVal').textContent='25%'; $('#sl-wQol')._slider.set(25,false);
+
+    // Filters
+    $('#walkFilter').addEventListener('change',()=>{ S.walkFilter=parseInt($('#walkFilter').value); calc(); });
+    $('#schoolFilter').addEventListener('change',()=>{ S.schoolFilter=parseInt($('#schoolFilter').value); calc(); });
+    $('#regionFilter').addEventListener('change',()=>{ S.regionFilter=$('#regionFilter').value; calc(); });
+
+    // Reset buttons
+    $('#btnResetTax').addEventListener('click',()=>{ const c=currentCity(); if(c){ setField('taxRate', c.taxRate, v=>Number(v).toFixed(1)+'%'); calc(); }});
+    $('#btnResetBaseFare').addEventListener('click',()=>{ const c=currentCity(); if(c){ setField('baseFare', c.baseFare, asEUR2); calc(); }});
+    $('#btnResetPerKm').addEventListener('click',()=>{ const c=currentCity(); if(c){ setField('perKm', c.perKm, asEUR2); calc(); }});
+    $('#btnResetFare').addEventListener('click',()=>{ const c=currentCity(); if(c){ const v=grossPerKm(c.baseFare,c.perKm,S.tripKm); setField('fareKm', v, asEUR2); calc(); }});
+    $('#btnResetCol').addEventListener('click',()=>{ const c=currentCity(); if(c){ const base=colDefault(c); setField('col', base, asEUR); $('#colDefault').textContent='• default: '+fmtEUR(base); calc(); }});
+    $('#btnResetAdultHealth').addEventListener('click',()=>{ const c=currentCity(); if(c){ setField('adultHealth', c.healthAdult||0, asEUR); calc(); }});
+    $('#btnResetChildHealth').addEventListener('click',()=>{ const c=currentCity(); if(c){ setField('childHealth', c.healthChild||0, asEUR); calc(); }});
+    $('#btnResetAll').addEventListener('click',()=>{ if(S.selectedCity) applyCityDefaults(S.selectedCity); });
+
+    // Boot
+    const first = Object.keys(CITIES)[0]; applyCityDefaults(first);
+
+    // expose slider instances to elements for set() reuse
+    document.querySelectorAll('.x-slider').forEach(el=>{ el._slider = el._slider || { set:()=>{}, get:()=>{}, setDisplayFormatter:()=>{}, update:()=>{} }; });
+  }
+
+  // Attach slider instances to elements
+  const _old_createSlider = createSlider; createSlider = function(el, onChange){ const inst=_old_createSlider(el,onChange); el._slider=inst; return inst; }
+
+  init();
+})();
+</script>
+
+<script>
+/* --- FIX: i18n + location-based language --- */
+const i18n = {
+  en: { title: "Golden Balance Planner", city: "City" },
+  bg: { title: "Златен баланс планер", city: "Град" },
+  de: { title: "Goldener Balance‑Planer", city: "Stadt" },
+  fr: { title: "Planificateur d’équilibre", city: "Ville" },
+  es: { title: "Planificador de equilibrio", city: "Ciudad" },
+  it: { title: "Planner di equilibrio", city: "Città" },
+  no: { title: "Balanse‑planlegger", city: "By" }
+};
+
+function detectLang() {
+  const lang = navigator.language.slice(0,2);
+  return i18n[lang] ? lang : "en";
+}
+
+const LANG = detectLang();
+document.querySelectorAll("[data-i18n]").forEach(el=>{
+  const key = el.dataset.i18n;
+  if(i18n[LANG][key]) el.textContent = i18n[LANG][key];
+});
+</script>
+
+
+<script>
+/* === Uber Mode Toggle === */
+let uberMode = true;
+const toggleBtn = document.getElementById('toggleUber');
+
+function applyUberMode(){
+  document.querySelectorAll('[data-uber]').forEach(el=>{
+    el.style.display = uberMode ? '' : 'none';
+  });
+  toggleBtn.textContent = uberMode ? 'Uber: ON' : 'Uber: OFF';
+}
+
+toggleBtn.addEventListener('click',()=>{
+  uberMode = !uberMode;
+  applyUberMode();
+});
+
+document.addEventListener('DOMContentLoaded', applyUberMode);
+</script>
+
+
+<script>
+/* === Extended i18n === */
+Object.assign(i18n,{
+  ro:{title:"Planificator de echilibru",city:"Oraș"},
+  pl:{title:"Planer równowagi",city:"Miasto"},
+  cs:{title:"Plánovač rovnováhy",city:"Město"},
+  sk:{title:"Plánovač rovnováhy",city:"Mesto"},
+  sv:{title:"Balansplanerare",city:"Stad"},
+  da:{title:"Balanceplanlægger",city:"By"},
+  nl:{title:"Balansplanner",city:"Stad"},
+  el:{title:"Σχεδιαστής ισορροπίας",city:"Πόλη"},
+  pt:{title:"Planeador de equilíbrio",city:"Cidade"}
+});
+</script>
+
+
+<script>
+/* === Rent vs Empty KM Dependency === */
+function calcEmptyKm(city, rent){
+  const min = city.rentMin;
+  const max = city.rentMax;
+  let base = city.emptyKm;
+
+  if(rent < min){
+    return base + 15;
+  }
+  if(rent > max){
+    return Math.max(2, base - 3);
+  }
+  const ratio = (max - rent) / (max - min);
+  return Math.round(base + ratio * 10);
+}
+
+function updateEmptyKm(){
+  const cityKey = document.getElementById('citySelect')?.value;
+  if(!cityKey) return;
+  const city = CITIES[cityKey];
+  const rent = Number(document.getElementById('rentInput')?.value || city.rentMin);
+  const km = calcEmptyKm(city, rent);
+  const el = document.getElementById('emptyKmValue');
+  if(el) el.textContent = km + ' km/day';
+}
+
+document.addEventListener('input', updateEmptyKm);
+document.addEventListener('change', updateEmptyKm);
+</script>
+
+</body>
+</html>
